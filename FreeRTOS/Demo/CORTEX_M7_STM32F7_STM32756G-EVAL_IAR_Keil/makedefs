@@ -1,0 +1,85 @@
+#******************************************************************************
+#
+# makedefs - Definitions common to all makefiles.
+#
+# Copyright (c) 2005,2006 Luminary Micro, Inc.  All rights reserved.
+#
+# Software License Agreement
+#
+# Luminary Micro, Inc. (LMI) is supplying this software for use solely and
+# exclusively on LMI's Stellaris Family of microcontroller products.
+#
+# The software is owned by LMI and/or its suppliers, and is protected under
+# applicable copyright laws.  All rights are reserved.  Any use in violation
+# of the foregoing restrictions may subject the user to criminal sanctions
+# under applicable laws, as well as to civil liability for the breach of the
+# terms and conditions of this license.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
+# LMI SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
+# CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
+#
+#******************************************************************************
+
+os:=${shell uname -s}
+
+ifndef COMPILER
+COMPILER=gcc
+endif
+
+ifndef DEBUGGER
+DEBUGGER=gdb
+endif
+
+CC=arm-none-eabi-gcc
+AFLAGS=-mcpu=cortex-m7 -MD
+
+#
+# The flags passed to the compiler.
+#       -mfloat-abi=hard soft softfp
+#       -Wl,--gc-sections \
+#       -nostartfiles -nodefaultlibs -specs=nosys.specs -specs=nano.specs \
+#	-nostdinc
+#
+CFLAGS=-mthumb -mcpu=cortex-m7 \
+       -mfloat-abi=softfp \
+       -O0 -fno-builtin \
+       -g
+
+AR=arm-none-eabi-ar
+LD=arm-none-eabi-ld
+OBJCOPY=arm-none-eabi-objcopy
+
+LDFLAGS= -Map gcc/out.map
+
+#
+# Get the location of libgcc.a from the GCC front-end.
+# LIBGCC=${shell ${CC} -mthumb -march=armv7e-m -print-libgcc-file-name}
+#
+LIBGCC=#${shell ${CC} -mthumb -march=armv7e-m -print-libgcc-file-name}
+
+#
+# Get the location of libc.a from the GCC front-end.
+#
+LIBC=#${shell ${CC} -mthumb -march=armv7e-m -print-file-name=libc.a}
+LIBM=${shell ${CC} -mthumb -march=armv7e-m -print-file-name=libm.a}
+
+
+${COMPILER}/%.o: %.c
+	${CC} ${CFLAGS} -D${COMPILER} -o ${@} -c ${<}
+
+${COMPILER}/%.o: %.s
+	${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
+
+${COMPILER}/%.a:
+	${AR} -cr ${@} ${^}
+
+${COMPILER}/%.axf:
+	${LD}  -T ${SCATTER_${notdir ${@:.axf=}}}    \
+	       --entry ${ENTRY_${notdir ${@:.axf=}}} \
+	       ${LDFLAGSgcc_${notdir ${@:.axf=}}}    \
+	       ${LDFLAGS} -o ${@} ${^}		\
+	       ${LIBC} $(LIBM) ${LIBGCC}
+	${OBJCOPY} -O binary ${@} ${@:.axf=.bin}
