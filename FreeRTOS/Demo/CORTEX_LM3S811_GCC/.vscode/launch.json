@@ -5,21 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "cortex-debug",
-            "name": "Cortex Debug",
-            "cwd": "${workspaceFolder}",
-            "executable": "./gcc/RTOSDemo.axf",
-            "machine": "lm3s811evb",
-            "gdbPath": "/usr/bin/arm-none-eabi-gdb",
+            "type": "cppdbg",
             "request": "launch",
-            "runToEntryPoint": "ResetISR",
-            "serverpath": "/usr/bin/st-util",
-            "servertype": "stlink",
-            "overrideLaunchCommands": [
-                "interpreter-exec console \"monitor reset halt\"",
-                "-enable-pretty-printing"
+            "name": "GDB",
+            "targetArchitecture": "arm",
+            "program": "${workspaceFolder}/gcc/RTOSDemo.axf",
+            "miDebuggerServerAddress": "localhost:1234",
+            "stopAtEntry": true,
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
             ],
-            "showDevDebugOutput": "none"
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
+            "debugServerPath": "/usr/bin/qemu-system-arm",
+            "debugServerArgs": "-machine lm3s811evb -kernel ${workspaceFolder}/gcc/RTOSDemo.bin -s -S",
+            "filterStderr": true,
+            "launchCompleteCommand": "exec-run",
+            "serverLaunchTimeout": 10000
         }
     ]
 }
